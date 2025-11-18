@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { User } from '../models/User';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -51,10 +51,9 @@ export class UserDAO {
   }
 
   async getNextUserForProcessing(): Promise<User | null> {
-    const result = await this.client.send(new QueryCommand({
+    const result = await this.client.send(new ScanCommand({
       TableName: this.tableName,
-      IndexName: 'StatusIndex',
-      KeyConditionExpression: '#status = :status',
+      FilterExpression: '#status = :status',
       ExpressionAttributeNames: {
         '#status': 'status',
       },
