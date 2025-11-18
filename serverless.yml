@@ -34,12 +34,12 @@ functions:
           path: /{proxy+}
           method: ANY
           cors: true
-  
+
   scheduler:
     handler: src/handler.scheduler
     timeout: 300
     events:
-      - schedule: rate(1 minute)
+      - schedule: rate(24 hour)
 
 resources:
   Resources:
