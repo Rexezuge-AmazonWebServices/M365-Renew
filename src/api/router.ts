@@ -5,10 +5,13 @@ import { getCredentials } from './routes/get-credentials';
 import { login } from './routes/login';
 
 export const router = async (
-  event: APIGatewayProxyEvent,
+  event: any,
   context: Context
 ): Promise<APIGatewayProxyResult> => {
-  const { httpMethod, path } = event;
+  // Lambda Function URL uses different event structure than API Gateway
+  const httpMethod = event.requestContext?.http?.method || event.httpMethod;
+  const path = event.rawPath || event.path;
+  console.log('Request:', { httpMethod, path });
   
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
