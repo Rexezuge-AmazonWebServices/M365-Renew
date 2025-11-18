@@ -6,7 +6,8 @@ useDotenv: true
 provider:
   name: aws
   runtime: nodejs20.x
-  region: us-east-1
+  region: us-east-2
+  versionFunctions: false
   environment:
     USERS_TABLE: ${self:service}-users-${sls:stage}
     PROCESSING_STATE_TABLE: ${self:service}-processing-state-${sls:stage}
