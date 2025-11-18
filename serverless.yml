@@ -20,6 +20,8 @@ provider:
     PROCESSING_LOG_TABLE: ${self:service}-Processing-Log
     AES_ENCRYPTION_KEY: ${env:AES_ENCRYPTION_KEY}
     NOTIFICATION_EMAIL: ${env:NOTIFICATION_EMAIL}
+    SNS_TOPIC_ARN:
+      Ref: NotificationTopic
 
 functions:
   api:
@@ -68,6 +70,15 @@ resources:
                     - Fn::GetAtt: [UsersTable, Arn]
                     - Fn::GetAtt: [ProcessingStateTable, Arn]
                     - Fn::GetAtt: [ProcessingLogTable, Arn]
+          - PolicyName: SNSAccess
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - sns:Publish
+                  Resource:
+                    Ref: NotificationTopic
 
     UsersTable:
       Type: AWS::DynamoDB::Table
@@ -115,6 +126,19 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+
+    NotificationTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-Notifications
+
+    NotificationSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Protocol: email
+        TopicArn:
+          Ref: NotificationTopic
+        Endpoint: ${env:NOTIFICATION_EMAIL}
 
 plugins:
   - serverless-plugin-typescript

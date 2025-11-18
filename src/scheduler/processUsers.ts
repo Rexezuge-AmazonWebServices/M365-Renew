@@ -4,7 +4,7 @@ import { ProcessingStateDAO } from '../dao/ProcessingStateDAO';
 import { ProcessingLogDAO } from '../dao/ProcessingLogDAO';
 import { decryptData } from '../crypto/aes-gcm';
 import { M365LoginUtil } from '../utils/M365LoginUtil';
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
 export const processUsers = async (event: ScheduledEvent, context: Context): Promise<void> => {
   console.log('🔄 Starting user processing...');
@@ -56,8 +56,8 @@ export const processUsers = async (event: ScheduledEvent, context: Context): Pro
       await logDAO.createLog(user.userId, 'failure', errorMessage);
     }
 
-    // Send notification email
-    await sendNotificationEmail(user.userId, status, resultMessage);
+    // Send notification via SNS
+    await sendNotificationMessage(user.userId, status, resultMessage);
 
     console.log(`✅ Processed user ${user.userId}: ${status} - ${resultMessage}`);
 
@@ -66,36 +66,25 @@ export const processUsers = async (event: ScheduledEvent, context: Context): Pro
   }
 };
 
-async function sendNotificationEmail(userId: string, status: string, message: string): Promise<void> {
-  const notificationEmail = process.env.NOTIFICATION_EMAIL;
-  if (!notificationEmail) {
-    console.log('⚠️ No notification email configured');
+async function sendNotificationMessage(userId: string, status: string, message: string): Promise<void> {
+  const topicArn = process.env.SNS_TOPIC_ARN;
+  if (!topicArn) {
+    console.log('⚠️ No SNS topic ARN configured');
     return;
   }
 
   try {
-    const sesClient = new SESClient({ region: process.env.AWS_REGION || 'us-east-1' });
+    const snsClient = new SNSClient({ region: process.env.AWS_REGION || 'us-east-2' });
     
-    const command = new SendEmailCommand({
-      Source: notificationEmail,
-      Destination: {
-        ToAddresses: [notificationEmail],
-      },
-      Message: {
-        Subject: {
-          Data: `[M365 Renew] ${new Date().toISOString()}: ${status}`,
-        },
-        Body: {
-          Text: {
-            Data: `User: ${userId}\nStatus: ${status}\nMessage: ${message}`,
-          },
-        },
-      },
+    const command = new PublishCommand({
+      TopicArn: topicArn,
+      Subject: `[M365 Renew] ${new Date().toISOString()}: ${status}`,
+      Message: `User: ${userId}\nStatus: ${status}\nMessage: ${message}`,
     });
 
-    await sesClient.send(command);
-    console.log('📧 Notification email sent');
+    await snsClient.send(command);
+    console.log('📧 Notification sent via SNS');
   } catch (error) {
-    console.error('❌ Failed to send notification email:', error);
+    console.error('❌ Failed to send SNS notification:', error);
   }
 }
