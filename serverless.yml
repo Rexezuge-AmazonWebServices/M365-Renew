@@ -1,5 +1,5 @@
 org: nuruyaxo2561
-service: M365-Renew-AWS
+service: M365-Renew-V2
 
 useDotenv: true
 
