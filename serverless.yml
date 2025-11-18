@@ -10,9 +10,9 @@ provider:
   versionFunctions: false
   stackName: ${self:service}
   environment:
-    USERS_TABLE: ${self:service}-users-${sls:stage}
-    PROCESSING_STATE_TABLE: ${self:service}-processing-state-${sls:stage}
-    PROCESSING_LOG_TABLE: ${self:service}-processing-log-${sls:stage}
+    USERS_TABLE: ${self:service}-Users
+    PROCESSING_STATE_TABLE: ${self:service}-Processing-State
+    PROCESSING_LOG_TABLE: ${self:service}-Processing-Log
     AES_ENCRYPTION_KEY: ${env:AES_ENCRYPTION_KEY}
     NOTIFICATION_EMAIL: ${env:NOTIFICATION_EMAIL}
   iamRoleStatements:
@@ -32,12 +32,14 @@ provider:
 functions:
   api:
     handler: src/handler.api
+    name: ${self:service}-API
     timeout: 30
     url:
       cors: true
 
   scheduler:
     handler: src/handler.scheduler
+    name: ${self:service}-Scheduler
     timeout: 300
     events:
       - schedule: rate(24 hours)
