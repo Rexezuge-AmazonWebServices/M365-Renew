@@ -51,6 +51,7 @@ export class UserDAO {
   }
 
   async getNextUserForProcessing(): Promise<User | null> {
+    // Get all active users
     const result = await this.client.send(new ScanCommand({
       TableName: this.tableName,
       FilterExpression: '#status = :status',
@@ -60,10 +61,59 @@ export class UserDAO {
       ExpressionAttributeValues: {
         ':status': 'active',
       },
-      Limit: 1,
     }));
 
-    return result.Items?.[0] as User || null;
+    const activeUsers = result.Items as User[] || [];
+    if (activeUsers.length === 0) {
+      return null;
+    }
+
+    // Get processing states for all users
+    const processingStateDAO = new (await import('./ProcessingStateDAO')).ProcessingStateDAO();
+    const userStates = await Promise.all(
+      activeUsers.map(async (user) => ({
+        user,
+        state: await processingStateDAO.getState(user.userId)
+      }))
+    );
+
+    // Filter users based on processing criteria
+    const now = new Date();
+    const minIntervalHours = parseInt(process.env.MIN_PROCESSING_INTERVAL_HOURS || '25');
+    
+    const eligibleUsers = userStates.filter(({ user, state }) => {
+      // If never processed, user is eligible
+      if (!state?.lastProcessedAt) {
+        return true;
+      }
+
+      // Check if enough time has passed since last processing
+      const lastProcessed = new Date(state.lastProcessedAt);
+      const hoursSinceLastProcessing = (now.getTime() - lastProcessed.getTime()) / (1000 * 60 * 60);
+      
+      return hoursSinceLastProcessing >= minIntervalHours;
+    });
+
+    if (eligibleUsers.length === 0) {
+      return null;
+    }
+
+    // Sort by priority: never processed first, then by oldest last processed
+    eligibleUsers.sort((a, b) => {
+      // Never processed users get highest priority
+      if (!a.state?.lastProcessedAt && b.state?.lastProcessedAt) return -1;
+      if (a.state?.lastProcessedAt && !b.state?.lastProcessedAt) return 1;
+      
+      // If both have been processed, prioritize oldest
+      if (a.state?.lastProcessedAt && b.state?.lastProcessedAt) {
+        return new Date(a.state.lastProcessedAt).getTime() - new Date(b.state.lastProcessedAt).getTime();
+      }
+      
+      // If neither processed, sort by creation date (oldest first)
+      return new Date(a.user.createdAt).getTime() - new Date(b.user.createdAt).getTime();
+    });
+
+    return eligibleUsers[0].user;
   }
 
   async updateUserStatus(userId: string, status: 'active' | 'disabled' | 'locked'): Promise<void> {
