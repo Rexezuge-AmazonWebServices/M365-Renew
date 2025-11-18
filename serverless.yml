@@ -31,11 +31,8 @@ functions:
   api:
     handler: src/handler.api
     timeout: 30
-    events:
-      - http:
-          path: /{proxy+}
-          method: ANY
-          cors: true
+    url:
+      cors: true
 
   scheduler:
     handler: src/handler.scheduler
