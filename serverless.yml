@@ -3,6 +3,9 @@ service: M365-Renew-V2
 
 useDotenv: true
 
+build:
+  esbuild: false
+
 provider:
   name: aws
   runtime: nodejs22.x
