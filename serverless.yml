@@ -8,6 +8,7 @@ provider:
   runtime: nodejs20.x
   region: us-east-2
   versionFunctions: false
+  stackName: ${self:service}
   environment:
     USERS_TABLE: ${self:service}-users-${sls:stage}
     PROCESSING_STATE_TABLE: ${self:service}-processing-state-${sls:stage}
