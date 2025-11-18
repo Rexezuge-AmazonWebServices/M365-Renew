@@ -22,7 +22,7 @@ functions:
   api:
     handler: src/handler.api
     name: ${self:service}-API
-    timeout: 30
+    timeout: 60
     url:
       cors: true
 

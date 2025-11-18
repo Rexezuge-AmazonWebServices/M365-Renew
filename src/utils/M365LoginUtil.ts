@@ -10,70 +10,68 @@ export class M365LoginUtil {
     
     try {
       browser = await puppeteer.launch({
-        args: chromium.args,
+        args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
         executablePath: await chromium.executablePath(),
         headless: true,
-        ignoreDefaultArgs: ['--disable-extensions'],
       });
 
       const page = await browser.newPage();
+      await page.setDefaultTimeout(8000);
 
       // Step 1: Navigate to login page
-      await page.goto(this.M365_LOGIN_URL, { waitUntil: 'networkidle2' });
+      await page.goto(this.M365_LOGIN_URL, { waitUntil: 'domcontentloaded' });
       console.log('➡️ Opened the login page.');
 
       // Step 2: Enter email
-      await page.waitForSelector('input[type="email"]', { timeout: 10000 });
-      await page.type('input[type="email"]', email, { delay: 100 });
+      await page.waitForSelector('input[type="email"]');
+      await page.type('input[type="email"]', email);
       await page.keyboard.press('Enter');
       console.log('➡️ Entered email address.');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Step 3: Enter password
-      await page.waitForSelector('input[type="password"]', { timeout: 10000 });
-      await page.type('input[type="password"]', password, { delay: 100 });
+      await page.waitForSelector('input[type="password"]');
+      await page.type('input[type="password"]', password);
       await page.keyboard.press('Enter');
       console.log('➡️ Entered password.');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Step 4: Generate and enter TOTP
       const otp = authenticator.generate(totpKey);
-      await page.waitForSelector('input[name="otc"]', { timeout: 10000 });
-      await page.type('input[name="otc"]', otp, { delay: 50 });
+      await page.waitForSelector('input[name="otc"]');
+      await page.type('input[name="otc"]', otp);
       await page.keyboard.press('Enter');
       console.log('➡️ Entered OTP.');
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Step 5: Handle TOU if present
-      const currentUrl = page.url();
-      if (currentUrl.startsWith('https://account.live.com/tou/accrue')) {
+      try {
         const acceptTouSelector = '[data-testid="primaryButton"]';
-        const touButton = await page.$(acceptTouSelector);
-        if (touButton) {
-          await page.click(acceptTouSelector);
-          console.log('➡️ Accepted terms of use.');
-          await new Promise(resolve => setTimeout(resolve, 3000));
-        }
+        await page.waitForSelector(acceptTouSelector, { timeout: 3000 });
+        await page.click(acceptTouSelector);
+        console.log('➡️ Accepted terms of use.');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (e) {
+        // TOU not present, continue
       }
 
       // Step 6: Handle "Stay signed in?" prompt
-      const staySignedInSelector = '[data-testid="secondaryButton"]';
-      const staySignedInButton = await page.$(staySignedInSelector);
-      if (staySignedInButton) {
+      try {
+        const staySignedInSelector = '[data-testid="secondaryButton"]';
+        await page.waitForSelector(staySignedInSelector, { timeout: 3000 });
         await page.click(staySignedInSelector);
         console.log('➡️ Selected "No" to "Stay signed in?"');
+      } catch (e) {
+        // Prompt not present, continue
       }
 
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Step 7: Verify login success
       const finalUrl = page.url();
       console.log('➡️ Final URL:', finalUrl);
       
-      const loginSuccess = finalUrl.includes('https://www.microsoft.com/');
-      const loginError = await page.$('div.error, div[role="alert"]');
-
-      const success = loginSuccess && !loginError;
+      const success = finalUrl.includes('https://www.microsoft.com/') && !finalUrl.includes('signin');
       console.log(success ? '✅ Sign-in was successful' : '❌ Sign-in failed');
       
       return success;
