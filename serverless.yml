@@ -73,8 +73,6 @@ resources:
         AttributeDefinitions:
           - AttributeName: userId
             AttributeType: S
-          - AttributeName: status
-            AttributeType: S
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
@@ -105,8 +103,6 @@ resources:
         TableName: ${self:provider.environment.PROCESSING_LOG_TABLE}
         AttributeDefinitions:
           - AttributeName: logId
-            AttributeType: S
-          - AttributeName: userId
             AttributeType: S
         KeySchema:
           - AttributeName: logId

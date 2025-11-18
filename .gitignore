@@ -1,6 +1,5 @@
 node_modules
-.serverless
-M365-Renew.old
+.build/
 
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,serverless,node
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,serverless,node
