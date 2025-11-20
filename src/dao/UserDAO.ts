@@ -1,6 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { User } from '../models/User';
+import { User } from '@/models/User';
 import { v4 as uuidv4 } from 'uuid';
 
 export class UserDAO {

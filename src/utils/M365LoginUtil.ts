@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+const chromium = require('@sparticuz/chromium');
 import { authenticator } from 'otplib';
 
 export class M365LoginUtil {
@@ -10,7 +10,7 @@ export class M365LoginUtil {
 
     try {
       browser = await puppeteer.launch({
-        args: chromium.args || [],
+        args: chromium.args,
         executablePath: await chromium.executablePath(),
         headless: true,
         ignoreDefaultArgs: ['--disable-extensions'],

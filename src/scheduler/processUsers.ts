@@ -90,7 +90,7 @@ async function sendNotificationMessage(userId: string, status: 'success' | 'fail
       '',
       'Thank you.',
       'John Doe',
-      'JohnDoe@example.com',
+      'John.Doe.1000@example.com',
       '',
       '1249 Evergreen Ridge Cir',
       'Northvale, CA 95248, USA',
