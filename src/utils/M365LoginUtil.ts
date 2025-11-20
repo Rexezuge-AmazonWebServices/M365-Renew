@@ -1,11 +1,17 @@
 import puppeteer from 'puppeteer-core';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const chromium = require('@sparticuz/chromium');
 import { authenticator } from 'otplib';
+
+export interface LoginResult {
+  success: boolean;
+  errorMessage?: string;
+}
 
 export class M365LoginUtil {
   private static readonly M365_LOGIN_URL = 'https://www.microsoft.com/cascadeauth/store/account/signin';
 
-  public static async login(email: string, password: string, totpKey: string): Promise<boolean> {
+  public static async login(email: string, password: string, totpKey: string): Promise<LoginResult> {
     let browser;
 
     try {
@@ -76,10 +82,14 @@ export class M365LoginUtil {
       const success = loginSuccess && !loginError;
       console.log(success ? '✅ Sign-in was successful' : '❌ Sign-in failed');
 
-      return success;
+      return {
+        success,
+        errorMessage: success ? undefined : 'Login failed - invalid credentials or authentication error',
+      };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during login process';
       console.error('Login process failed:', error);
-      return false;
+      return { success: false, errorMessage };
     } finally {
       if (browser) {
         await browser.close();

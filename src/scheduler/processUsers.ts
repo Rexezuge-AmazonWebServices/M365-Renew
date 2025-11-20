@@ -38,10 +38,10 @@ export const processUsers = async (_event: ScheduledEvent, _context: Context): P
       const totpKey = await decryptData(user.encryptedTotpKey, key, user.salt);
 
       // Attempt login
-      const loginSuccess = await M365LoginUtil.login(emailAddress, password, totpKey);
+      const loginResult = await M365LoginUtil.login(emailAddress, password, totpKey);
 
-      status = loginSuccess ? 'success' : 'failure';
-      resultMessage = loginSuccess ? 'Login successful' : 'Login failed';
+      status = loginResult.success ? 'success' : 'failure';
+      resultMessage = loginResult.success ? 'Login successful' : loginResult.errorMessage || 'Login failed';
 
       // Update processing state and log
       await stateDAO.upsertState(user.userId, status, resultMessage);

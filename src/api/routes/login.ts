@@ -13,14 +13,14 @@ export const login = async (event: APIGatewayProxyEvent, _context: Context): Pro
     const body = JSON.parse(event.body || '{}');
     const { email_address, password, totp_key } = LoginSchema.parse(body);
 
-    const success = await M365LoginUtil.login(email_address, password, totp_key);
+    const result = await M365LoginUtil.login(email_address, password, totp_key);
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        success,
-        message: success ? 'Login successful' : 'Login failed',
+        success: result.success,
+        message: result.success ? 'Login successful' : result.errorMessage || 'Login failed',
       }),
     };
   } catch (error) {
