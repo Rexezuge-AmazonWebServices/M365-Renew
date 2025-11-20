@@ -66,7 +66,7 @@ export const processUsers = async (event: ScheduledEvent, context: Context): Pro
   }
 };
 
-async function sendNotificationMessage(userId: string, status: string, message: string): Promise<void> {
+async function sendNotificationMessage(userId: string, status: 'success' | 'failure', message: string): Promise<void> {
   const topicArn = process.env.SNS_TOPIC_ARN;
   if (!topicArn) {
     console.log('⚠️ No SNS topic ARN configured');
@@ -74,12 +74,34 @@ async function sendNotificationMessage(userId: string, status: string, message: 
   }
 
   try {
-    const snsClient = new SNSClient({ region: process.env.AWS_REGION || 'us-east-2' });
+    const snsClient: SNSClient= new SNSClient({ region: process.env.AWS_REGION || 'us-east-2' });
     
-    const command = new PublishCommand({
+    const executionTime: string = new Date().toISOString().replace("T", " ").replace("Z", " UTC");
+    const result: string = status === 'success' ? "Completed" : "Failed";
+    const additionalInformation: string = status === 'success' ? 'No irregularities were observed during the execution.' : (error instanceof Error ? error.message : 'Unknown');
+    const messageBody: string = [
+      'Hello Boss Davis,',
+      '',
+      'This message serves as a formal record of the routine maintenance activity performed today. The operational details are listed below for documentation purposes.',
+      '',
+      `- Execution Time: ${executionTime}`,
+      `- Outcome: ${result}`,
+      `- Additional Information: ${additionalInformation}`,
+      '',
+      'This log will be stored for future reference. Further entries of the same category will follow this format.',
+      '',
+      'Thank you.',
+      'John Doe',
+      'JohnDoe@example.com'
+      '',
+      '1249 Evergreen Ridge Cir',
+      'Northvale, CA 95248, USA'
+    ].join('\r\n');
+    const subject: string = `${result} - Maintenance Log: M365 Renew Task`;
+    const command: PublishCommand = new PublishCommand({
       TopicArn: topicArn,
-      Subject: `[M365 Renew] ${new Date().toISOString()}: ${status}`,
-      Message: `User: ${userId}\nStatus: ${status}\nMessage: ${message}`,
+      Subject: subject,
+      Message: messageBody,
     });
 
     await snsClient.send(command);
