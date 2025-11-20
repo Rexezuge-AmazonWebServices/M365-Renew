@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "install": "npm install --legacy-peer-deps",
     "clean": "rm -rf .build/ .serverless/",
     "predeploy": "npm run clean && npm run prettier && npm run lint && npm run tsc",
     "deploy": "serverless deploy",
@@ -14,11 +13,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.658.1",
-    "@aws-sdk/client-ses": "^3.658.1",
     "@aws-sdk/client-sns": "^3.936.0",
     "@aws-sdk/lib-dynamodb": "^3.658.1",
     "@sparticuz/chromium": "^141.0.0",
-    "aws-sdk": "^2.1691.0",
     "otplib": "^12.0.1",
     "puppeteer-core": "^24.30.0",
     "swagger-ui-dist": "^5.30.2",
