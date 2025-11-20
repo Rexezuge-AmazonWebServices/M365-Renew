@@ -19,7 +19,6 @@ provider:
     PROCESSING_STATE_TABLE: ${self:service}-Processing-State
     PROCESSING_LOG_TABLE: ${self:service}-Processing-Log
     AES_ENCRYPTION_KEY: ${env:AES_ENCRYPTION_KEY}
-    NOTIFICATION_EMAIL: ${env:NOTIFICATION_EMAIL}
     SNS_TOPIC_ARN:
       Ref: NotificationTopic
 
